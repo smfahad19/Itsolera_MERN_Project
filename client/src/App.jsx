@@ -27,6 +27,7 @@ import OrderDetails from "./pages/customer/OrderDetails";
 import Cart from "./pages/customer/Cart";
 import Checkout from "./pages/customer/Checkout";
 import ProductDetails from "./pages/customer/ProductDetails";
+import Products from "./pages/customer/Products";
 
 // Seller Pages
 import SellerDashboard from "./pages/seller/Dashboard";
@@ -34,13 +35,14 @@ import SellerProfile from "./pages/seller/SellerProfile";
 import SellerProducts from "./pages/seller/SellerProducts";
 import AddProduct from "./pages/seller/AddProduct";
 import EditProduct from "./pages/seller/EditProduct";
-import SellerOrders from "./pages/seller/SellerOrders"; // Add this import
+import SellerOrders from "./pages/seller/SellerOrders";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
-import Products from "./pages/customer/Products";
+import AdminUsers from "./pages/admin/Users";
+import AdminSellerVerification from "./pages/admin/SellerVerification";
+import AdminSettings from "./pages/admin/AdminSettings";
 
-// Component to handle role-based redirection
 const RoleBasedRedirect = () => {
   const { user } = useSelector((state) => state.auth);
 
@@ -65,6 +67,17 @@ const AuthenticatedRedirect = ({ children }) => {
 
   if (token) {
     return <RoleBasedRedirect />;
+  }
+
+  return children;
+};
+
+// Admin Layout Component
+const AdminLayout = ({ children }) => {
+  const { user } = useSelector((state) => state.auth);
+
+  if (!user || user.role !== "admin") {
+    return <Navigate to="/" />;
   }
 
   return children;
@@ -160,6 +173,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/products"
+              element={
+                <ProtectedRoute>
+                  <Products />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Seller Protected Routes */}
             <Route
@@ -186,16 +207,6 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-
-            <Route
-              path="products"
-              element={
-                <ProtectedRoute>
-                  <Products />
-                </ProtectedRoute>
-              }
-            />
-
             <Route
               path="/seller/profile"
               element={
@@ -234,15 +245,71 @@ const App = () => {
               path="/admin/dashboard"
               element={
                 <ProtectedRoute>
-                  <AdminDashboard />
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
                 </ProtectedRoute>
               }
             />
 
-            {/* Catch-all route - redirect based on auth status */}
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <AdminUsers />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/sellers"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <AdminSellerVerification />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <AdminSettings />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch-all route */}
             <Route path="*" element={<RoleBasedRedirect />} />
           </Routes>
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: "#1f2937",
+                color: "#fff",
+                border: "1px solid #374151",
+              },
+              success: {
+                style: {
+                  background: "#065f46",
+                  color: "#fff",
+                },
+              },
+              error: {
+                style: {
+                  background: "#7f1d1d",
+                  color: "#fff",
+                },
+              },
+            }}
+          />
         </div>
       </Router>
     </Provider>
