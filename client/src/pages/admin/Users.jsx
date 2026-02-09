@@ -7,41 +7,25 @@ import {
   FiUsers,
   FiUserCheck,
   FiUserX,
-  FiEdit,
   FiTrash2,
   FiSearch,
-  FiFilter,
-  FiEye,
   FiArrowLeft,
   FiRefreshCw,
-  FiPackage,
-  FiShoppingBag,
-  FiDollarSign,
-  FiCalendar,
-  FiMail,
-  FiPhone,
-  FiMapPin,
-  FiGlobe,
-  FiFileText,
-  FiCheckCircle,
-  FiXCircle,
-  FiAlertCircle,
 } from "react-icons/fi";
 
 const AdminUsers = () => {
   const { token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
     customers: 0,
     sellers: 0,
     admins: 0,
-    pendingVerification: 0,
-    pendingSellers: 0,
   });
   const [filters, setFilters] = useState({
     role: "",
@@ -54,11 +38,8 @@ const AdminUsers = () => {
     total: 0,
   });
 
-  // New state for user details modal
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showRoleMenu, setShowRoleMenu] = useState(null);
 
   useEffect(() => {
     if (!token) {
@@ -66,7 +47,7 @@ const AdminUsers = () => {
       return;
     }
     fetchUsers();
-  }, [token, navigate, pagination.page]);
+  }, [token, navigate, pagination.page, filters.role]);
 
   const fetchUsers = async () => {
     try {
@@ -79,22 +60,25 @@ const AdminUsers = () => {
 
       if (filters.role) params.role = filters.role;
 
-      const response = await axios.get(
-        "http://localhost:5000/api/admin/users",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params,
-        },
-      );
+      const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
 
       if (response.data.success) {
-        setUsers(response.data.users);
-        setFilteredUsers(response.data.users);
-        setStats(response.data.stats);
+        setUsers(response.data.users || []);
+        setStats(
+          response.data.stats || {
+            total: 0,
+            customers: 0,
+            sellers: 0,
+            admins: 0,
+          },
+        );
         setPagination({
           ...pagination,
-          totalPages: response.data.pagination.totalPages,
-          total: response.data.total,
+          totalPages: response.data.pagination?.totalPages || 1,
+          total: response.data.total || 0,
         });
       }
     } catch (error) {
@@ -105,76 +89,21 @@ const AdminUsers = () => {
     }
   };
 
-  // NEW FUNCTION: Fetch user details
-  const fetchUserDetails = async (userId) => {
-    try {
-      setLoadingDetails(true);
-      const response = await axios.get(
-        `http://localhost:5000/api/admin/users/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.data.success) {
-        setUserDetails(response.data);
-        setShowUserModal(true);
-      }
-    } catch (error) {
-      console.error("Fetch User Details Error:", error);
-      toast.error("Failed to load user details");
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
-
-  // NEW FUNCTION: Handle view user details
-  const handleViewUserDetails = (user) => {
-    setSelectedUser(user);
-    fetchUserDetails(user._id);
-  };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({
-      ...filters,
-      [name]: value,
-    });
-  };
-
-  const handleSearch = () => {
-    let filtered = users;
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchLower) ||
-          user.email.toLowerCase().includes(searchLower) ||
-          (user.businessName &&
-            user.businessName.toLowerCase().includes(searchLower)),
-      );
-    }
-
-    setFilteredUsers(filtered);
-  };
-
   const handleUpdateRole = async (userId, newRole) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}/role`,
+        `${API_BASE_URL}/api/admin/users/${userId}/role`,
         { role: newRole },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data.success) {
-        toast.success(response.data.message);
+        toast.success("Role updated successfully");
         fetchUsers();
-        if (showUserModal) {
-          fetchUserDetails(userId); // Refresh details if modal is open
-        }
+        setShowRoleMenu(null);
       }
     } catch (error) {
+      console.error("Update Role Error:", error);
       toast.error(error.response?.data?.message || "Failed to update role");
     }
   };
@@ -182,19 +111,17 @@ const AdminUsers = () => {
   const handleUpdateStatus = async (userId, type, status, reason = "") => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}/status`,
+        `${API_BASE_URL}/api/admin/users/${userId}/status`,
         { type, status, reason },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data.success) {
-        toast.success(response.data.message);
+        toast.success("Status updated successfully");
         fetchUsers();
-        if (showUserModal) {
-          fetchUserDetails(userId); // Refresh details if modal is open
-        }
       }
     } catch (error) {
+      console.error("Update Status Error:", error);
       toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
@@ -206,16 +133,17 @@ const AdminUsers = () => {
 
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/admin/users/${userId}`,
+        `${API_BASE_URL}/api/admin/users/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data.success) {
         toast.success("User deleted successfully");
         fetchUsers();
-        setShowUserModal(false); // Close modal if user is deleted
+        setShowUserModal(false);
       }
     } catch (error) {
+      console.error("Delete User Error:", error);
       toast.error(error.response?.data?.message || "Failed to delete user");
     }
   };
@@ -234,7 +162,9 @@ const AdminUsers = () => {
   };
 
   const getStatusBadgeColor = (status) => {
-    switch (status) {
+    if (!status) return "bg-gray-100 text-gray-800";
+
+    switch (status.toLowerCase()) {
       case "approved":
       case "verified":
         return "bg-green-100 text-green-800";
@@ -242,8 +172,6 @@ const AdminUsers = () => {
         return "bg-yellow-100 text-yellow-800";
       case "rejected":
         return "bg-red-100 text-red-800";
-      case "suspended":
-        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -254,10 +182,17 @@ const AdminUsers = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const formatDateTime = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString();
-  };
+  // Filter users based on search
+  const filteredUsers = users.filter((user) => {
+    if (!filters.search) return true;
+
+    const searchTerm = filters.search.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(searchTerm) ||
+      user.email?.toLowerCase().includes(searchTerm) ||
+      user.businessName?.toLowerCase().includes(searchTerm)
+    );
+  });
 
   if (loading) {
     return (
@@ -295,9 +230,13 @@ const AdminUsers = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={fetchUsers}
-                className="p-2 text-gray-500 hover:text-gray-700"
+                disabled={loading}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                title="Refresh"
               >
-                <FiRefreshCw className="w-5 h-5" />
+                <FiRefreshCw
+                  className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+                />
               </button>
             </div>
           </div>
@@ -306,66 +245,55 @@ const AdminUsers = () => {
 
       {/* Stats Overview */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white border rounded-lg p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white border rounded-lg p-4 shadow-sm">
             <div className="text-2xl font-bold text-gray-900">
               {stats.total}
             </div>
             <div className="text-sm text-gray-500">Total Users</div>
           </div>
-          <div className="bg-white border rounded-lg p-4">
+          <div className="bg-white border rounded-lg p-4 shadow-sm">
             <div className="text-2xl font-bold text-green-600">
               {stats.customers}
             </div>
             <div className="text-sm text-gray-500">Customers</div>
           </div>
-          <div className="bg-white border rounded-lg p-4">
+          <div className="bg-white border rounded-lg p-4 shadow-sm">
             <div className="text-2xl font-bold text-blue-600">
               {stats.sellers}
             </div>
             <div className="text-sm text-gray-500">Sellers</div>
           </div>
-          <div className="bg-white border rounded-lg p-4">
+          <div className="bg-white border rounded-lg p-4 shadow-sm">
             <div className="text-2xl font-bold text-purple-600">
               {stats.admins}
             </div>
             <div className="text-sm text-gray-500">Admins</div>
           </div>
-          <div className="bg-white border rounded-lg p-4">
-            <div className="text-2xl font-bold text-yellow-600">
-              {stats.pendingVerification}
-            </div>
-            <div className="text-sm text-gray-500">Pending Verification</div>
-          </div>
-          <div className="bg-white border rounded-lg p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {stats.pendingSellers}
-            </div>
-            <div className="text-sm text-gray-500">Pending Sellers</div>
-          </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white border rounded-lg p-4 mb-6">
+        <div className="bg-white border rounded-lg p-4 mb-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="relative">
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  name="search"
                   value={filters.search}
-                  onChange={handleFilterChange}
-                  onKeyUp={handleSearch}
-                  placeholder="Search by name, email, or business..."
+                  onChange={(e) =>
+                    setFilters({ ...filters, search: e.target.value })
+                  }
+                  placeholder="Search by name or email..."
                   className="pl-10 pr-4 py-2 border rounded-lg w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <select
-                name="role"
                 value={filters.role}
-                onChange={handleFilterChange}
+                onChange={(e) =>
+                  setFilters({ ...filters, role: e.target.value })
+                }
                 className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Roles</option>
@@ -375,17 +303,14 @@ const AdminUsers = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <FiFilter className="w-4 h-4" />
-              <span>
-                Showing {filteredUsers.length} of {pagination.total} users
-              </span>
+            <div className="text-sm text-gray-500">
+              Showing {filteredUsers.length} of {pagination.total} users
             </div>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -410,17 +335,18 @@ const AdminUsers = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
-                    <tr key={user._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr
+                      key={user._id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
-                              {user.name?.charAt(0)?.toUpperCase() || "U"}
-                            </div>
+                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold mr-3">
+                            {user.name?.charAt(0)?.toUpperCase() || "U"}
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.name}
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {user.name || "No Name"}
                             </div>
                             {user.businessName && (
                               <div className="text-sm text-gray-500">
@@ -430,12 +356,12 @@ const AdminUsers = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="flex flex-col gap-2">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}
                           >
-                            {user.role}
+                            {user.role || "customer"}
                           </span>
                           {user.role === "customer" && (
                             <span
@@ -453,7 +379,7 @@ const AdminUsers = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
                           {user.email}
                         </div>
@@ -463,20 +389,75 @@ const AdminUsers = () => {
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500">
                         {formatDate(user.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          {/* Changed from Link to button */}
-                          <button
-                            onClick={() => handleViewUserDetails(user)}
-                            className="text-blue-600 hover:text-blue-900 p-1"
-                            title="View Details"
-                          >
-                            <FiEye className="w-5 h-5" />
-                          </button>
+                          {/* Role Update Dropdown */}
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                setShowRoleMenu(
+                                  showRoleMenu === user._id ? null : user._id,
+                                )
+                              }
+                              className="p-2 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-lg"
+                              title="Change Role"
+                            >
+                              <FiUserCheck className="w-5 h-5" />
+                            </button>
 
+                            {showRoleMenu === user._id && (
+                              <div className="absolute left-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                <div className="p-2 space-y-1">
+                                  <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b">
+                                    Change Role
+                                  </div>
+                                  {user.role !== "customer" && (
+                                    <button
+                                      onClick={() =>
+                                        handleUpdateRole(user._id, "customer")
+                                      }
+                                      className="block w-full text-left px-3 py-2 text-sm text-green-700 hover:bg-green-50 rounded"
+                                    >
+                                      Make Customer
+                                    </button>
+                                  )}
+                                  {user.role !== "seller" && (
+                                    <button
+                                      onClick={() =>
+                                        handleUpdateRole(user._id, "seller")
+                                      }
+                                      className="block w-full text-left px-3 py-2 text-sm text-blue-700 hover:bg-blue-50 rounded"
+                                    >
+                                      Make Seller
+                                    </button>
+                                  )}
+                                  {user.role !== "admin" && (
+                                    <button
+                                      onClick={() =>
+                                        handleUpdateRole(user._id, "admin")
+                                      }
+                                      className="block w-full text-left px-3 py-2 text-sm text-purple-700 hover:bg-purple-50 rounded"
+                                    >
+                                      Make Admin
+                                    </button>
+                                  )}
+                                  <div className="border-t pt-1">
+                                    <button
+                                      onClick={() => setShowRoleMenu(null)}
+                                      className="block w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Customer Verification Actions */}
                           {user.role === "customer" && (
                             <>
                               {user.verificationStatus === "pending" && (
@@ -489,7 +470,7 @@ const AdminUsers = () => {
                                         "verified",
                                       )
                                     }
-                                    className="text-green-600 hover:text-green-900 p-1"
+                                    className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg"
                                     title="Approve Verification"
                                   >
                                     <FiUserCheck className="w-5 h-5" />
@@ -507,7 +488,7 @@ const AdminUsers = () => {
                                           reason,
                                         );
                                     }}
-                                    className="text-red-600 hover:text-red-900 p-1"
+                                    className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg"
                                     title="Reject Verification"
                                   >
                                     <FiUserX className="w-5 h-5" />
@@ -517,6 +498,7 @@ const AdminUsers = () => {
                             </>
                           )}
 
+                          {/* Seller Approval Actions */}
                           {user.role === "seller" && (
                             <>
                               {user.approvalStatus === "pending" && (
@@ -529,7 +511,7 @@ const AdminUsers = () => {
                                         "approved",
                                       )
                                     }
-                                    className="text-green-600 hover:text-green-900 p-1"
+                                    className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg"
                                     title="Approve Seller"
                                   >
                                     <FiUserCheck className="w-5 h-5" />
@@ -547,7 +529,7 @@ const AdminUsers = () => {
                                           reason,
                                         );
                                     }}
-                                    className="text-red-600 hover:text-red-900 p-1"
+                                    className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg"
                                     title="Reject Seller"
                                   >
                                     <FiUserX className="w-5 h-5" />
@@ -557,11 +539,12 @@ const AdminUsers = () => {
                             </>
                           )}
 
+                          {/* Delete Button */}
                           {user._id !==
                             JSON.parse(localStorage.getItem("user"))?._id && (
                             <button
                               onClick={() => handleDeleteUser(user._id)}
-                              className="text-red-600 hover:text-red-900 p-1"
+                              className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg"
                               title="Delete User"
                             >
                               <FiTrash2 className="w-5 h-5" />
@@ -631,392 +614,6 @@ const AdminUsers = () => {
           )}
         </div>
       </div>
-
-      {/* User Details Modal */}
-      {showUserModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  User Details
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowUserModal(false);
-                    setUserDetails(null);
-                    setSelectedUser(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {loadingDetails ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                    <p className="mt-4 text-gray-600">
-                      Loading user details...
-                    </p>
-                  </div>
-                </div>
-              ) : userDetails ? (
-                <div className="space-y-6">
-                  {/* Basic Information */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-gray-900 mb-4">
-                      Basic Information
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm text-gray-500">Name</label>
-                        <div className="font-medium">
-                          {userDetails.user.name}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Email</label>
-                        <div className="font-medium">
-                          {userDetails.user.email}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Phone</label>
-                        <div className="font-medium">
-                          {userDetails.user.phone || "Not provided"}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Role</label>
-                        <div className="font-medium capitalize">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(userDetails.user.role)}`}
-                          >
-                            {userDetails.user.role}
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">
-                          Joined Date
-                        </label>
-                        <div className="font-medium">
-                          {formatDateTime(userDetails.user.createdAt)}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">User ID</label>
-                        <div className="font-medium text-sm">
-                          {userDetails.user._id}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Information */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-gray-900 mb-4">
-                      Status Information
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {userDetails.user.role === "customer" && (
-                        <>
-                          <div>
-                            <label className="text-sm text-gray-500">
-                              Verification Status
-                            </label>
-                            <div className="font-medium">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(userDetails.user.verificationStatus)}`}
-                              >
-                                {userDetails.user.verificationStatus ||
-                                  "unverified"}
-                              </span>
-                            </div>
-                          </div>
-                          {userDetails.user.verifiedAt && (
-                            <div>
-                              <label className="text-sm text-gray-500">
-                                Verified At
-                              </label>
-                              <div className="font-medium">
-                                {formatDateTime(userDetails.user.verifiedAt)}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {userDetails.user.role === "seller" && (
-                        <>
-                          <div>
-                            <label className="text-sm text-gray-500">
-                              Approval Status
-                            </label>
-                            <div className="font-medium">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(userDetails.user.approvalStatus)}`}
-                              >
-                                {userDetails.user.approvalStatus || "pending"}
-                              </span>
-                            </div>
-                          </div>
-                          {userDetails.user.approvedAt && (
-                            <div>
-                              <label className="text-sm text-gray-500">
-                                Approved At
-                              </label>
-                              <div className="font-medium">
-                                {formatDateTime(userDetails.user.approvedAt)}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Additional Information */}
-                  {userDetails.additionalInfo && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-medium text-gray-900 mb-4">
-                        Additional Information
-                      </h3>
-
-                      {userDetails.user.role === "customer" &&
-                        userDetails.additionalInfo.orders && (
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                              <FiShoppingBag className="w-4 h-4" />
-                              Recent Orders (
-                              {userDetails.additionalInfo.orders.length})
-                            </h4>
-                            {userDetails.additionalInfo.orders.length > 0 ? (
-                              <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                  <thead>
-                                    <tr>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                        Order ID
-                                      </th>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                        Date
-                                      </th>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                        Amount
-                                      </th>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                        Status
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-200">
-                                    {userDetails.additionalInfo.orders.map(
-                                      (order) => (
-                                        <tr key={order._id}>
-                                          <td className="px-3 py-2 text-sm">
-                                            {order._id.substring(0, 8)}...
-                                          </td>
-                                          <td className="px-3 py-2 text-sm">
-                                            {formatDate(order.createdAt)}
-                                          </td>
-                                          <td className="px-3 py-2 text-sm">
-                                            $
-                                            {order.totalAmount?.toFixed(2) ||
-                                              "0.00"}
-                                          </td>
-                                          <td className="px-3 py-2 text-sm">
-                                            <span
-                                              className={`inline-flex px-2 py-1 rounded text-xs ${order.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
-                                            >
-                                              {order.status}
-                                            </span>
-                                          </td>
-                                        </tr>
-                                      ),
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            ) : (
-                              <p className="text-gray-500 text-sm">
-                                No orders yet
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                      {userDetails.user.role === "seller" && (
-                        <div className="space-y-4">
-                          {userDetails.additionalInfo.products && (
-                            <div>
-                              <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                                <FiPackage className="w-4 h-4" />
-                                Recent Products (
-                                {userDetails.additionalInfo.products.length})
-                              </h4>
-                              {userDetails.additionalInfo.products.length >
-                              0 ? (
-                                <div className="overflow-x-auto">
-                                  <table className="min-w-full divide-y divide-gray-200">
-                                    <thead>
-                                      <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Product
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Price
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Stock
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Status
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                      {userDetails.additionalInfo.products.map(
-                                        (product) => (
-                                          <tr key={product._id}>
-                                            <td className="px-3 py-2 text-sm truncate max-w-xs">
-                                              {product.title}
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                              $
-                                              {product.price?.toFixed(2) ||
-                                                "0.00"}
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                              {product.stock || 0}
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                              <span
-                                                className={`inline-flex px-2 py-1 rounded text-xs ${product.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-                                              >
-                                                {product.isActive
-                                                  ? "Active"
-                                                  : "Inactive"}
-                                              </span>
-                                            </td>
-                                          </tr>
-                                        ),
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              ) : (
-                                <p className="text-gray-500 text-sm">
-                                  No products yet
-                                </p>
-                              )}
-                            </div>
-                          )}
-
-                          {userDetails.additionalInfo.sellerOrders && (
-                            <div>
-                              <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                                <FiDollarSign className="w-4 h-4" />
-                                Recent Orders (
-                                {userDetails.additionalInfo.sellerOrders.length}
-                                )
-                              </h4>
-                              {userDetails.additionalInfo.sellerOrders.length >
-                              0 ? (
-                                <div className="overflow-x-auto">
-                                  <table className="min-w-full divide-y divide-gray-200">
-                                    <thead>
-                                      <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Order ID
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Date
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Amount
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                          Status
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                      {userDetails.additionalInfo.sellerOrders.map(
-                                        (order) => (
-                                          <tr key={order._id}>
-                                            <td className="px-3 py-2 text-sm">
-                                              {order._id.substring(0, 8)}...
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                              {formatDate(order.createdAt)}
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                              $
-                                              {order.totalAmount?.toFixed(2) ||
-                                                "0.00"}
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                              <span
-                                                className={`inline-flex px-2 py-1 rounded text-xs ${order.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
-                                              >
-                                                {order.status}
-                                              </span>
-                                            </td>
-                                          </tr>
-                                        ),
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              ) : (
-                                <p className="text-gray-500 text-sm">
-                                  No orders yet
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-end space-x-3 pt-4 border-t">
-                    <button
-                      onClick={() => {
-                        setShowUserModal(false);
-                        setUserDetails(null);
-                        setSelectedUser(null);
-                      }}
-                      className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
-                    >
-                      Close
-                    </button>
-
-                    {selectedUser._id !==
-                      JSON.parse(localStorage.getItem("user"))?._id && (
-                      <button
-                        onClick={() => handleDeleteUser(selectedUser._id)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                      >
-                        Delete User
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FiAlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">Unable to load user details</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

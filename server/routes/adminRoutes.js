@@ -1,22 +1,15 @@
 import express from "express";
 import {
-  // User Management
   getAllUsers,
   getUserById,
   updateUserRole,
   updateUserStatus,
   deleteUser,
-
-  // Dashboard Stats
   getDashboardStats,
-
-  // Customer Verification
   getPendingVerifications,
   getCustomerVerificationDetails,
   approveCustomerVerification,
   rejectCustomerVerification,
-
-  // Seller Management
   getAllSellers,
   getPendingSellers,
   getSellerApprovalDetails,
@@ -24,13 +17,9 @@ import {
   rejectSeller,
   suspendSeller,
   verifySellerDocument,
-
-  // Product Management
   getAllProducts,
   updateProductStatus,
   deleteProduct,
-
-  // Category Management
   getAllCategories,
   getCategoryById,
   createCategory,
@@ -53,10 +42,8 @@ router.put("/users/:id/role", updateUserRole);
 router.put("/users/:id/status", updateUserStatus);
 router.delete("/users/:id", deleteUser);
 
-// ==================== DASHBOARD ====================
 router.get("/dashboard/stats", getDashboardStats);
 
-// ==================== CUSTOMER VERIFICATION ====================
 router.get("/customers/verification/pending", getPendingVerifications);
 router.get(
   "/customers/verification/:customerId",

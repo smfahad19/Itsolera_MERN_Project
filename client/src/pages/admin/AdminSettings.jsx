@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
-  FiSettings,
-  FiSave,
   FiRefreshCw,
   FiArrowLeft,
   FiUsers,
@@ -19,7 +17,6 @@ import {
   FiCheck,
   FiAlertCircle,
   FiEye,
-  FiExternalLink,
   FiDollarSign,
   FiShoppingCart,
   FiBox,
@@ -32,11 +29,11 @@ const AdminSettings = () => {
   const { token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("categories");
 
-  // Categories State
   const [categories, setCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
   const [newCategory, setNewCategory] = useState({
@@ -45,7 +42,6 @@ const AdminSettings = () => {
     parentCategory: "",
   });
 
-  // Products State
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productFilters, setProductFilters] = useState({
@@ -62,7 +58,6 @@ const AdminSettings = () => {
     search: "",
   });
 
-  // Product View Modal State
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [productDetails, setProductDetails] = useState(null);
@@ -87,12 +82,9 @@ const AdminSettings = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        "http://localhost:5000/api/admin/categories",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const response = await axios.get(`${API_BASE_URL}/api/admin/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response.data.success) {
         setCategories(response.data.categories);
@@ -113,7 +105,7 @@ const AdminSettings = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/admin/categories",
+        `${API_BASE_URL}/api/admin/categories`,
         newCategory,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -133,7 +125,7 @@ const AdminSettings = () => {
   const handleEditCategory = async (categoryId, updatedData) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/categories/${categoryId}`,
+        `${API_BASE_URL}/api/admin/categories/${categoryId}`,
         updatedData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -161,7 +153,7 @@ const AdminSettings = () => {
 
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/admin/categories/${categoryId}`,
+        `${API_BASE_URL}/api/admin/categories/${categoryId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -179,7 +171,7 @@ const AdminSettings = () => {
   const handleToggleCategoryStatus = async (categoryId, currentStatus) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/categories/${categoryId}/status`,
+        `${API_BASE_URL}/api/admin/categories/${categoryId}/status`,
         { isActive: !currentStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -203,13 +195,10 @@ const AdminSettings = () => {
   const fetchProducts = async () => {
     try {
       setProductsLoading(true);
-      const response = await axios.get(
-        "http://localhost:5000/api/admin/products",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: productFilters,
-        },
-      );
+      const response = await axios.get(`${API_BASE_URL}/api/admin/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: productFilters,
+      });
 
       if (response.data.success) {
         setProducts(response.data.products);
@@ -225,7 +214,7 @@ const AdminSettings = () => {
   const handleProductStatusChange = async (productId, currentStatus) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/products/${productId}/status`,
+        `${API_BASE_URL}/api/admin/products/${productId}/status`,
         { isActive: !currentStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -252,7 +241,7 @@ const AdminSettings = () => {
 
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/admin/products/${productId}`,
+        `${API_BASE_URL}/api/admin/products/${productId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -267,17 +256,13 @@ const AdminSettings = () => {
     }
   };
 
-  // ==================== USERS ====================
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const response = await axios.get(
-        "http://localhost:5000/api/admin/users",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: userFilters,
-        },
-      );
+      const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: userFilters,
+      });
 
       if (response.data.success) {
         setUsers(response.data.users);
@@ -293,7 +278,7 @@ const AdminSettings = () => {
   const handleUserRoleChange = async (userId, newRole) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}/role`,
+        `${API_BASE_URL}/api/admin/users/${userId}/role`,
         { role: newRole },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -318,7 +303,7 @@ const AdminSettings = () => {
 
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/admin/users/${userId}`,
+        `${API_BASE_URL}/api/admin/users/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -340,7 +325,7 @@ const AdminSettings = () => {
       setProductDetailsLoading(true);
 
       const response = await axios.get(
-        `http://localhost:5000/api/admin/products/${productId}`,
+        `${API_BASE_URL}/api/admin/products/${productId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -359,7 +344,6 @@ const AdminSettings = () => {
   };
 
   const handleEditProduct = (productId) => {
-    // Navigate to product edit page
     navigate(`/admin/products/edit/${productId}`);
   };
 
@@ -1093,7 +1077,7 @@ const AdminSettings = () => {
                           <tr key={user._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10">
+                                <div className="flex h-10 w-10">
                                   <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
                                     {user.name?.charAt(0)?.toUpperCase() || "U"}
                                   </div>
