@@ -5,16 +5,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../uploads/"));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
-  },
-});
+// CRITICAL FIX FOR PRODUCTION: Use memory storage, NOT disk storage
+const storage = multer.memoryStorage();
 
 // File filter
 const fileFilter = (req, file, cb) => {
@@ -27,12 +19,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Multer instance
+// Multer instance - NO FILE SYSTEM WRITING!
 const upload = multer({
-  storage: storage,
+  storage: storage, // memory storage - works everywhere
   fileFilter: fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 5,
   },
 });
 
