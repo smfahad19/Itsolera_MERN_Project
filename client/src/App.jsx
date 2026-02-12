@@ -283,7 +283,6 @@ const App = () => {
               }
             />
 
-            {/* Catch-all route */}
             <Route path="*" element={<RoleBasedRedirect />} />
           </Routes>
           <Toaster
