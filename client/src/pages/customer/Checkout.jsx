@@ -14,6 +14,8 @@ import {
 const Checkout = () => {
   const { user, token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [cart, setCart] = useState({ items: [], totalPrice: 0, totalItems: 0 });
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -31,7 +33,6 @@ const Checkout = () => {
     if (!images || !Array.isArray(images) || images.length === 0) {
       return null;
     }
-    // Images array contains objects: { public_id: "...", url: "..." }
     return images[0].url;
   };
 
@@ -54,13 +55,13 @@ const Checkout = () => {
   const fetchCart = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/customer/cart",
+        `${API_BASE_URL}/api/customer/cart`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
 
-      console.log("Cart API response:", response.data); // Debug
+      console.log("Cart API response:", response.data);
 
       if (response.data.success) {
         const cartData = response.data.data || response.data.cart;
@@ -90,7 +91,7 @@ const Checkout = () => {
   const loadUserAddress = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/customer/profile",
+        `${API_BASE_URL}/api/customer/profile`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -157,7 +158,7 @@ const Checkout = () => {
       console.log("Sending order data:", orderData);
 
       const response = await axios.post(
-        "http://localhost:5000/api/customer/orders",
+        `${API_BASE_URL}/api/customer/orders`, // ✅ FIXED
         orderData,
         {
           headers: {

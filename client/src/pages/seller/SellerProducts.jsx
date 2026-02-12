@@ -16,6 +16,8 @@ import {
 
 const SellerProducts = () => {
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -23,13 +25,16 @@ const SellerProducts = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [deleting, setDeleting] = useState(null);
 
+  const API_BASE = `${API_BASE_URL}/api`;
+  const SELLER_API = `${API_BASE}/seller`;
+
   useEffect(() => {
     if (!token) return;
 
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/seller/products",
+          `${SELLER_API}/products`, // ✅ FIXED
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -53,7 +58,7 @@ const SellerProducts = () => {
     setDeleting(productId);
     try {
       await axios.delete(
-        `http://localhost:5000/api/seller/products/${productId}`,
+        `${SELLER_API}/products/${productId}`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -70,7 +75,6 @@ const SellerProducts = () => {
   };
 
   const filteredProducts = products.filter((product) => {
-    // Search filter
     const matchesSearch =
       search === "" ||
       product.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -93,7 +97,6 @@ const SellerProducts = () => {
     return "bg-green-100 text-green-800";
   };
 
-  // Format price function
   const formatPrice = (price) => {
     if (!price) return "$0.00";
     return new Intl.NumberFormat("en-US", {
@@ -102,13 +105,11 @@ const SellerProducts = () => {
     }).format(price);
   };
 
-  // Get image URL from images array
   const getImageUrl = (images) => {
     if (!images || !Array.isArray(images) || images.length === 0) {
       return null;
     }
 
-    // Images array में object होते हैं { public_id, url }
     return images[0].url || null;
   };
 
@@ -126,7 +127,6 @@ const SellerProducts = () => {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>

@@ -17,11 +17,11 @@ import {
 
 const OrderDetails = () => {
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Get image URL helper function - Improved
   const getImageUrl = (product) => {
     if (!product) return null;
 
@@ -35,20 +35,18 @@ const OrderDetails = () => {
       const firstImage = product.images[0];
 
       if (typeof firstImage === "string") {
-        return firstImage; // If image is direct URL string
+        return firstImage;
       } else if (firstImage.url) {
-        return firstImage.url; // If image is { url: "...", public_id: "..." }
+        return firstImage.url;
       } else if (firstImage.imageUrl) {
-        return firstImage.imageUrl; // Alternative property name
+        return firstImage.imageUrl;
       }
     }
 
-    // Check for direct imageUrl property on product
     if (product.imageUrl) {
       return product.imageUrl;
     }
 
-    // Check for productImage in item (fallback)
     if (product.productImage) {
       return product.productImage;
     }
@@ -56,7 +54,6 @@ const OrderDetails = () => {
     return null;
   };
 
-  // Format price
   const formatPrice = (price) => {
     if (!price) return "0.00";
     return parseFloat(price).toFixed(2);
@@ -71,7 +68,7 @@ const OrderDetails = () => {
   const fetchOrder = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/customer/orders/${id}`,
+        `${API_BASE_URL}/api/customer/orders/${id}`, // ✅ FIXED
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
@@ -81,7 +78,6 @@ const OrderDetails = () => {
         const orderData = response.data.order || response.data.data;
         setOrder(orderData);
 
-        // Debug: Log order items structure
         console.log("Order items:", orderData.items);
         if (orderData.items && orderData.items.length > 0) {
           console.log("First item product:", orderData.items[0].productId);

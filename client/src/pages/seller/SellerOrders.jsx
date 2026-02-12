@@ -31,6 +31,8 @@ import {
 
 const SellerOrders = () => {
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,6 +61,10 @@ const SellerOrders = () => {
   const [paymentStatus, setPaymentStatus] = useState("");
   const [updatingPayment, setUpdatingPayment] = useState(false);
 
+  // API URLs - ✅ FIXED: Use API_BASE_URL instead of hardcoded localhost
+  const API_BASE = `${API_BASE_URL}/api`;
+  const SELLER_API = `${API_BASE}/seller`;
+
   // Cancellation reasons
   const cancellationReasons = [
     "Product out of stock",
@@ -86,7 +92,7 @@ const SellerOrders = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/api/seller/orders`,
+        `${SELLER_API}/orders`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
@@ -113,7 +119,7 @@ const SellerOrders = () => {
     try {
       setModalLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/api/seller/orders/${orderId}`,
+        `${SELLER_API}/orders/${orderId}`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -157,7 +163,7 @@ const SellerOrders = () => {
     try {
       setUpdatingPayment(true);
       const response = await axios.put(
-        `http://localhost:5000/api/seller/orders/${orderToUpdatePayment._id}/payment-status`,
+        `${SELLER_API}/orders/${orderToUpdatePayment._id}/payment-status`, // ✅ FIXED
         {
           paymentStatus: paymentStatus,
         },
@@ -228,7 +234,7 @@ const SellerOrders = () => {
     try {
       setCancelling(true);
       const response = await axios.put(
-        `http://localhost:5000/api/seller/orders/${orderToCancel._id}/status`,
+        `${SELLER_API}/orders/${orderToCancel._id}/status`, // ✅ FIXED
         {
           status: "cancelled",
           reason: finalReason,
@@ -357,7 +363,7 @@ const SellerOrders = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/seller/orders/${orderId}/status`,
+        `${SELLER_API}/orders/${orderId}/status`, // ✅ FIXED
         requestData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -1000,7 +1006,6 @@ const SellerOrders = () => {
         </div>
       )}
 
-      {/* Payment Status Update */}
       {showPaymentModal && orderToUpdatePayment && (
         <div className="fixed inset-0 bg-white/20 bg-opacity-30 backdrop-blur-md z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-auto">

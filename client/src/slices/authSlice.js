@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+// ✅ FIXED: Use environment variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/api`; // ✅ http://localhost:5000/api → env se ayega
 
 export const registerUser = createAsyncThunk(
   "auth/register",

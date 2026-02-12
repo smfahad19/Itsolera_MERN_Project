@@ -19,6 +19,8 @@ import {
 
 const CustomerOrders = () => {
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,7 +81,7 @@ const CustomerOrders = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/api/customer/orders`,
+        `${API_BASE_URL}/api/customer/orders`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {

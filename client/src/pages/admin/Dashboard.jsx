@@ -18,6 +18,8 @@ import {
   FiTrendingDown,
 } from "react-icons/fi";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ YAHAN USE KARO
+
 const AdminDashboard = () => {
   const { user, token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -49,9 +51,9 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      // Fetch dashboard stats
+      // ✅ ENV VARIABLE USE KARO
       const response = await axios.get(
-        "http://localhost:5000/api/admin/dashboard/stats",
+        `${API_BASE_URL}/api/admin/dashboard/stats`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -70,15 +72,12 @@ const AdminDashboard = () => {
         });
       }
 
-      // Fetch recent users
+      // ✅ ENV VARIABLE USE KARO
       try {
-        const usersRes = await axios.get(
-          "http://localhost:5000/api/admin/users",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { limit: 5 },
-          },
-        );
+        const usersRes = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { limit: 5 },
+        });
 
         if (usersRes.data.success) {
           setRecentUsers(usersRes.data.users?.slice(0, 5) || []);
@@ -87,10 +86,10 @@ const AdminDashboard = () => {
         console.log("Users fetch error:", userError.message);
       }
 
-      // Fetch pending sellers
+      // ✅ ENV VARIABLE USE KARO
       try {
         const sellersRes = await axios.get(
-          "http://localhost:5000/api/admin/sellers/pending",
+          `${API_BASE_URL}/api/admin/sellers/pending`,
           {
             headers: { Authorization: `Bearer ${token}` },
             params: { limit: 5 },

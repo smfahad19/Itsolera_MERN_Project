@@ -61,7 +61,6 @@ const RoleBasedRedirect = () => {
   }
 };
 
-// Component to handle authenticated user redirect
 const AuthenticatedRedirect = ({ children }) => {
   const { token } = useSelector((state) => state.auth);
 
@@ -72,7 +71,6 @@ const AuthenticatedRedirect = ({ children }) => {
   return children;
 };
 
-// Admin Layout Component
 const AdminLayout = ({ children }) => {
   const { user } = useSelector((state) => state.auth);
 

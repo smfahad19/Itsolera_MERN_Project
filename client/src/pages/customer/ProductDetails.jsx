@@ -18,6 +18,7 @@ import { FaStore } from "react-icons/fa";
 const ProductDetails = () => {
   const { id } = useParams();
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,15 +57,13 @@ const ProductDetails = () => {
 
       // Use customer API for product details
       const response = await axios.get(
-        `http://localhost:5000/api/customer/products/${id}`,
+        `${API_BASE_URL}/api/customer/products/${id}`, // ✅ FIXED
         token
           ? {
               headers: { Authorization: `Bearer ${token}` },
             }
           : {},
       );
-
-      console.log("✅ Product API response:", response.data);
 
       if (response.data.success) {
         if (response.data.data) {
@@ -80,7 +79,6 @@ const ProductDetails = () => {
       console.error("Product details error:", error);
       console.error("Error response:", error.response?.data);
 
-      // Handle specific error types
       if (error.response?.data?.error?.includes("Cast to ObjectId")) {
         toast.error("Invalid product ID format");
       } else if (error.response?.status === 404) {
@@ -104,7 +102,7 @@ const ProductDetails = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/customer/cart/${id}`,
+        `${API_BASE_URL}/api/customer/cart/${id}`, // ✅ FIXED
         { quantity },
         {
           headers: {
@@ -176,7 +174,6 @@ const ProductDetails = () => {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
         <div className="mb-6">
           <div className="flex items-center text-sm text-gray-600">
             <Link to="/customer/dashboard" className="hover:text-black">
@@ -190,7 +187,6 @@ const ProductDetails = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Product Images */}
           <div>
             {/* Main Image */}
             <div className="border border-gray-300 rounded-lg overflow-hidden mb-4">
@@ -210,7 +206,7 @@ const ProductDetails = () => {
                   <button
                     key={index}
                     onClick={() => setCurrentImage(index)}
-                    className={`flex-shrink-0 w-20 h-20 border ${currentImage === index ? "border-black" : "border-gray-300"} rounded overflow-hidden`}
+                    className={`flex w-20 h-20 border ${currentImage === index ? "border-black" : "border-gray-300"} rounded overflow-hidden`}
                   >
                     <img
                       src={image.url}
@@ -343,7 +339,6 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Features */}
             <div className="border-t border-gray-300 pt-8">
               <h2 className="text-xl font-bold text-black mb-4">
                 Product Features

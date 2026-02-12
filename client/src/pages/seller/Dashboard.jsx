@@ -27,6 +27,7 @@ import { FaTruck, FaBoxOpen, FaRegClock } from "react-icons/fa";
 const SellerDashboard = () => {
   const { user, token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,8 +52,8 @@ const SellerDashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
 
-  // API URLs
-  const API_BASE = "http://localhost:5000/api";
+  // ✅ FIXED: Use API_BASE_URL instead of hardcoded localhost
+  const API_BASE = `${API_BASE_URL}/api`;
   const SELLER_API = `${API_BASE}/seller`;
 
   useEffect(() => {
@@ -207,7 +208,6 @@ const SellerDashboard = () => {
     }
   };
 
-  // Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -373,7 +373,6 @@ const SellerDashboard = () => {
     );
   }
 
-  // Approved Seller - Show Full Dashboard
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

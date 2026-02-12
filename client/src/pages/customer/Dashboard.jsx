@@ -19,6 +19,8 @@ import toast from "react-hot-toast";
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ const CustomerDashboard = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/customer/products",
+        `${API_BASE_URL}/api/customer/products`, // ✅ FIXED
         { params },
       );
       setProducts(response.data.data || []);
@@ -72,7 +74,7 @@ const CustomerDashboard = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/categories");
+      const response = await axios.get(`${API_BASE_URL}/api/categories`); // ✅ FIXED
       setCategories(response.data.categories || []);
     } catch (error) {
       console.log("Error loading categories:", error.message);
@@ -104,7 +106,7 @@ const CustomerDashboard = () => {
       console.log("🛒 Adding to cart:", { productId, quantity, token });
 
       const response = await axios.post(
-        `http://localhost:5000/api/customer/cart/${productId}`,
+        `${API_BASE_URL}/api/customer/cart/${productId}`, // ✅ FIXED
         { quantity },
         {
           headers: {

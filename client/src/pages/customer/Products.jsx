@@ -16,6 +16,8 @@ import toast from "react-hot-toast";
 const Products = () => {
   const navigate = useNavigate();
   const { user, token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,6 @@ const Products = () => {
   const [inStock, setInStock] = useState(false);
   const [addingToCart, setAddingToCart] = useState(null);
 
-  // Get image URL helper
   const getImageUrl = (images) => {
     if (!images || !Array.isArray(images) || images.length === 0) {
       return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&h=300&q=80";
@@ -39,7 +40,6 @@ const Products = () => {
     return images[0].url;
   };
 
-  // Format price
   const formatPrice = (price) => {
     if (!price) return "0.00";
     return parseFloat(price).toFixed(2);
@@ -67,7 +67,6 @@ const Products = () => {
         sortBy: sortBy,
       };
 
-      // Only send category if it's not "all"
       if (selectedCategory && selectedCategory !== "all") {
         params.category = selectedCategory;
       }
@@ -91,7 +90,7 @@ const Products = () => {
       console.log("📡 API Params:", params);
 
       const response = await axios.get(
-        "http://localhost:5000/api/customer/products",
+        `${API_BASE_URL}/api/customer/products`, // ✅ FIXED
         { params },
       );
 
@@ -99,7 +98,6 @@ const Products = () => {
       setTotalPages(response.data.pagination?.totalPages || 1);
       setBrands(response.data.filters?.brands || []);
 
-      // Extract categories from products
       if (response.data.data && response.data.data.length > 0) {
         const categoryMap = new Map();
 
@@ -120,7 +118,7 @@ const Products = () => {
         setCategories([]);
       }
     } catch (error) {
-      console.log("❌ Error loading products:", error);
+      console.log("Error loading products:", error);
       toast.error("Failed to load products");
     } finally {
       setLoading(false);
@@ -148,10 +146,10 @@ const Products = () => {
         return;
       }
 
-      console.log("🛒 Adding to cart:", { productId, quantity, token });
+      console.log("Adding to cart:", { productId, quantity, token });
 
       const response = await axios.post(
-        `http://localhost:5000/api/customer/cart/${productId}`,
+        `${API_BASE_URL}/api/customer/cart/${productId}`, // ✅ FIXED
         { quantity },
         {
           headers: {
@@ -161,7 +159,7 @@ const Products = () => {
         },
       );
 
-      console.log("✅ Cart response:", response.data);
+      console.log("Cart response:", response.data);
 
       if (response.data.success) {
         toast.success(`Added ${quantity} item(s) to cart successfully!`);
@@ -169,7 +167,7 @@ const Products = () => {
         toast.error(response.data.message || "Failed to add to cart");
       }
     } catch (error) {
-      console.error("❌ Add to cart error:", error);
+      console.error(" Add to cart error:", error);
       console.error("Error response:", error.response?.data);
 
       if (error.response?.status === 401) {

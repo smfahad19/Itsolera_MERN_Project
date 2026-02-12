@@ -13,6 +13,8 @@ import {
 
 const Cart = () => {
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [cart, setCart] = useState({ items: [], totalPrice: 0, totalItems: 0 });
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
@@ -22,7 +24,6 @@ const Cart = () => {
     if (!images || !Array.isArray(images) || images.length === 0) {
       return null;
     }
-    // Images array contains objects: { public_id: "...", url: "..." }
     return images[0].url;
   };
 
@@ -45,7 +46,7 @@ const Cart = () => {
     console.log("Fetching cart...");
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/customer/cart",
+        `${API_BASE_URL}/api/customer/cart`, // ✅ FIXED
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -57,7 +58,6 @@ const Cart = () => {
         const cartData = response.data.data ||
           response.data.cart || { items: [], totalAmount: 0 };
 
-        // Ensure items is an array
         const items = Array.isArray(cartData.items) ? cartData.items : [];
         const totalPrice = cartData.totalAmount || cartData.totalPrice || 0;
 
@@ -90,7 +90,7 @@ const Cart = () => {
     setUpdating(productId);
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/customer/cart/${productId}`,
+        `${API_BASE_URL}/api/customer/cart/${productId}`, // ✅ FIXED
         { quantity: newQuantity },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -115,7 +115,7 @@ const Cart = () => {
     console.log("Removing item:", productId);
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/customer/cart/${productId}`,
+        `${API_BASE_URL}/api/customer/cart/${productId}`, // ✅ FIXED
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
@@ -139,7 +139,7 @@ const Cart = () => {
     console.log("Clearing cart...");
     try {
       const response = await axios.delete(
-        "http://localhost:5000/api/customer/cart",
+        `${API_BASE_URL}/api/customer/cart`, // ✅ FIXED
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
@@ -167,8 +167,6 @@ const Cart = () => {
       </div>
     );
   }
-
-  console.log("Rendering cart with data:", cart);
 
   return (
     <div className="min-h-screen bg-white">

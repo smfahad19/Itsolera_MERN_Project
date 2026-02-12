@@ -8,6 +8,8 @@ import { FiUpload, FiX, FiPlus, FiMinus, FiPlusCircle } from "react-icons/fi";
 const AddProduct = () => {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [specifications, setSpecifications] = useState([
@@ -34,8 +36,8 @@ const AddProduct = () => {
     isActive: true,
   });
 
-  // API base URL
-  const API_BASE = "http://localhost:5000/api";
+  // ✅ FIXED: Use API_BASE_URL instead of hardcoded localhost
+  const API_BASE = `${API_BASE_URL}/api`;
 
   useEffect(() => {
     fetchCategories();
@@ -212,7 +214,7 @@ const AddProduct = () => {
         data.append("images", image);
       });
 
-      // Send request
+      // ✅ FIXED: Use API_BASE instead of hardcoded localhost
       await axios.post(`${API_BASE}/seller/products`, data, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -50,7 +50,6 @@ const AdminSettings = () => {
     isActive: "",
   });
 
-  // Users State
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userFilters, setUserFilters] = useState({

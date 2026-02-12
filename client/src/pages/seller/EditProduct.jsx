@@ -9,6 +9,8 @@ const EditProduct = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -32,14 +34,19 @@ const EditProduct = () => {
     isActive: true,
   });
 
+  const API_BASE = `${API_BASE_URL}/api`;
+  const SELLER_API = `${API_BASE}/seller`;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [productRes, categoriesRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/seller/products/${id}`, {
+          axios.get(`${SELLER_API}/products/${id}`, {
+            // ✅ FIXED
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/seller/categories", {
+          axios.get(`${SELLER_API}/categories`, {
+            // ✅ FIXED
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -47,7 +54,6 @@ const EditProduct = () => {
         const product = productRes.data.data;
         console.log("Product data:", product);
 
-        // Parse specifications from object to array
         let specs = [];
         if (
           product.specifications &&
@@ -102,7 +108,6 @@ const EditProduct = () => {
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
 
-    // Validate file size (max 5MB)
     const validFiles = files.filter((file) => {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} is too large. Max size is 5MB`);
@@ -111,7 +116,6 @@ const EditProduct = () => {
       return true;
     });
 
-    // Validate file type
     const imageFiles = validFiles.filter((file) =>
       file.type.startsWith("image/"),
     );
@@ -128,7 +132,6 @@ const EditProduct = () => {
   };
 
   const removeExistingImage = (imageIndex) => {
-    // Remove from images to keep
     const updatedImages = imagesToKeep.filter(
       (_, index) => index !== imageIndex,
     );
@@ -136,7 +139,6 @@ const EditProduct = () => {
     toast.success("Image marked for removal");
   };
 
-  // Function to preview selected files
   const previewSelectedFiles = () => {
     return selectedFiles.map((file, index) => {
       const objectUrl = URL.createObjectURL(file);
@@ -201,7 +203,6 @@ const EditProduct = () => {
     setSaving(true);
 
     try {
-      // Convert specifications array to object
       const specificationsObj = {};
       specifications.forEach((spec) => {
         if (spec.key.trim() && spec.value.trim()) {
@@ -209,7 +210,6 @@ const EditProduct = () => {
         }
       });
 
-      // Create FormData
       const productData = new FormData();
       productData.append("title", formData.title);
       productData.append("description", formData.description);
@@ -223,10 +223,8 @@ const EditProduct = () => {
       productData.append("isFeatured", formData.isFeatured);
       productData.append("isActive", formData.isActive);
 
-      // Send which images to keep
       productData.append("keepImages", JSON.stringify(imagesToKeep));
 
-      // Append new images
       selectedFiles.forEach((file) => {
         productData.append("images", file);
       });
@@ -236,7 +234,7 @@ const EditProduct = () => {
       console.log("New images:", selectedFiles.length);
 
       const response = await axios.put(
-        `http://localhost:5000/api/seller/products/${id}`,
+        `${SELLER_API}/products/${id}`, // ✅ FIXED
         productData,
         {
           headers: {

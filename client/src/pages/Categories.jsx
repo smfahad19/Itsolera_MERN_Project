@@ -4,6 +4,7 @@ import axios from "axios";
 import { FiPackage, FiGrid, FiChevronRight } from "react-icons/fi";
 
 const Categories = () => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +14,7 @@ const Categories = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/categories");
+      const response = await axios.get(`${API_BASE_URL}/api/categories`);
       if (response.data.success) {
         setCategories(response.data.categories || []);
       }

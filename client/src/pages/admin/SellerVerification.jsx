@@ -83,7 +83,6 @@ const SellerVerification = () => {
         error.response?.data || error.message,
       );
 
-      // Try alternative endpoints if first fails
       try {
         const fallbackResponse = await axios.get(
           `${API_BASE_URL}/api/sellers`,

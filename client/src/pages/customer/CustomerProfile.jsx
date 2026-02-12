@@ -15,6 +15,8 @@ import {
 
 const CustomerProfile = () => {
   const { user, token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -35,7 +37,7 @@ const CustomerProfile = () => {
     const fetchProfile = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/customer/profile",
+          `${API_BASE_URL}/api/customer/profile`, // ✅ FIXED
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -91,7 +93,7 @@ const CustomerProfile = () => {
 
     try {
       const response = await axios.put(
-        "http://localhost:5000/api/customer/profile",
+        `${API_BASE_URL}/api/customer/profile`, // ✅ FIXED
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },

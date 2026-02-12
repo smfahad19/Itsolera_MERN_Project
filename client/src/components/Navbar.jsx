@@ -19,19 +19,20 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSellerApproved, setIsSellerApproved] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Check seller approval status
   useEffect(() => {
     const checkSellerApproval = async () => {
       if (user?.role === "seller" && token) {
         try {
           setLoading(true);
           const response = await axios.get(
-            "http://localhost:5000/api/seller/approval-status",
+            `${API_BASE_URL}/api/seller/approval-status`, // ✅ FIXED
             {
               headers: { Authorization: `Bearer ${token}` },
             },
@@ -67,7 +68,7 @@ const Navbar = () => {
 
     if (!isSellerApproved) {
       toast.error("Your seller account is pending approval");
-      navigate("/seller/dashboard"); // Still navigate to show approval pending screen
+      navigate("/seller/dashboard");
     } else {
       navigate("/seller/dashboard");
     }

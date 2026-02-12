@@ -7,18 +7,14 @@ import {
   FiMail,
   FiPhone,
   FiMapPin,
-  FiSave,
-  FiEdit2,
-  FiBriefcase,
-  FiCreditCard,
-  FiGlobe,
   FiHome,
   FiGlobe as FiLink,
 } from "react-icons/fi";
-import { FaStore } from "react-icons/fa";
 
 const SellerProfile = () => {
   const { user, token } = useSelector((state) => state.auth);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // ✅ ADD THIS
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -38,10 +34,8 @@ const SellerProfile = () => {
     businessWebsite: "",
   });
 
-  // API base URL
-  const API_BASE = "http://localhost:5000/api";
+  const API_BASE = `${API_BASE_URL}/api`;
 
-  // API endpoints
   const API_ENDPOINTS = {
     seller: {
       profile: `${API_BASE}/seller/profile`,
@@ -62,7 +56,6 @@ const SellerProfile = () => {
         const sellerData = response.data.seller || response.data;
         setProfile(sellerData);
 
-        // Set form data according to backend fields
         setFormData({
           phone: sellerData.phone || "",
           address: sellerData.address || {
@@ -113,7 +106,6 @@ const SellerProfile = () => {
     e.preventDefault();
 
     try {
-      // Prepare data according to backend
       const updateData = {
         phone: formData.phone,
         address: formData.address,
@@ -125,7 +117,7 @@ const SellerProfile = () => {
       };
 
       const response = await axios.put(
-        API_ENDPOINTS.seller.updateProfile,
+        API_ENDPOINTS.seller.updateProfile, // ✅ FIXED
         updateData,
         {
           headers: { Authorization: `Bearer ${token}` },
