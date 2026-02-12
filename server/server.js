@@ -15,8 +15,8 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://itsolera-mern-project-po64.vercel.app", // frontend URL
-      "https://itsolera-mern-project-5n93.vercel.app", // agar admin ya dashboard koi aur
+      "https://itsolera-mern-project-po64.vercel.app", // frontend
+      "https://itsolera-mern-project-5n93.vercel.app", // backend dashboard if needed
     ],
     credentials: true,
   }),
