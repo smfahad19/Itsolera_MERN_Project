@@ -12,7 +12,17 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// ✅ CORS Setup for frontend
+app.use(
+  cors({
+    origin: [
+      "https://cool-gingersnap-16eddc.netlify.app", // Netlify frontend
+      "https://itsolera-mern-project-5n93.vercel.app", // Vercel frontend if needed
+    ],
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 
 mongoose
