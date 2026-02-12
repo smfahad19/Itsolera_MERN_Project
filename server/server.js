@@ -12,12 +12,11 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS Setup for frontend
 app.use(
   cors({
     origin: [
-      "https://cool-gingersnap-16eddc.netlify.app", // Netlify frontend
-      "https://itsolera-mern-project-5n93.vercel.app", // Vercel frontend if needed
+      "https://cool-gingersnap-16eddc.netlify.app",
+      "https://itsolera-mern-project-5n93.vercel.app",
     ],
     credentials: true,
   }),
@@ -31,7 +30,7 @@ mongoose
   .catch((err) => console.log("MongoDB Error:", err));
 
 app.get("/", (req, res) => {
-  res.send("Backend Running 🚀");
+  res.send("Backend Running ");
 });
 
 app.use("/api/auth", authRoutes);
