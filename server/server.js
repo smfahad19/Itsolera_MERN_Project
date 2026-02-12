@@ -15,8 +15,8 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://cool-gingersnap-16eddc.netlify.app",
-      "https://itsolera-mern-project-5n93.vercel.app",
+      "https://itsolera-mern-project-po64.vercel.app", // frontend URL
+      "https://itsolera-mern-project-5n93.vercel.app", // agar admin ya dashboard koi aur
     ],
     credentials: true,
   }),
