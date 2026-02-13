@@ -6,7 +6,8 @@ import {
   checkApprovalStatus,
   getSellerOrders, // Add this
   getSellerOrder, // Add this
-  updateOrderStatus, // Add this
+  updateOrderStatus,
+  updatePaymentStatus, // Add this
 } from "../controllers/seller/sellerController.js";
 import {
   createProduct,
@@ -47,5 +48,6 @@ router.patch("/products/:id/stock", updateStock);
 router.get("/orders", getSellerOrders); // Add this
 router.get("/orders/:id", getSellerOrder); // Add this
 router.put("/orders/:id/status", updateOrderStatus); // Add this
+router.put("/orders/:id/payment-status", updatePaymentStatus);
 
 export default router;

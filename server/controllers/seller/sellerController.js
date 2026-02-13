@@ -336,6 +336,27 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    // Define allowed transitions
+    const allowedTransitions = {
+      pending: ["processing", "cancelled"],
+      processing: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [], // No further updates
+      cancelled: [], // No further updates
+    };
+
+    // Check if transition is allowed
+    const currentStatus = order.orderStatus;
+    if (
+      !allowedTransitions[currentStatus]?.includes(status) &&
+      currentStatus !== status
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change order status from ${currentStatus} to ${status}`,
+      });
+    }
+
     // Validation for cancellation
     if (status === "cancelled") {
       // Check if order can be cancelled (only pending or processing)
@@ -355,6 +376,17 @@ export const updateOrderStatus = async (req, res) => {
       }
     }
 
+    // Validation for delivered
+    if (status === "delivered") {
+      // Check if payment is completed
+      if (order.paymentStatus !== "paid") {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot mark order as delivered until payment is completed",
+        });
+      }
+    }
+
     // Update order status
     order.orderStatus = status;
 
@@ -364,9 +396,13 @@ export const updateOrderStatus = async (req, res) => {
     } else if (status === "cancelled") {
       order.cancelledAt = new Date();
       order.cancelledReason = reason;
+    } else if (status === "processing" && !order.processedAt) {
+      order.processedAt = new Date();
+    } else if (status === "shipped" && !order.shippedAt) {
+      order.shippedAt = new Date();
     }
 
-    // Save order without validation for sellerId
+    // Save order
     await order.save({ validateBeforeSave: false });
 
     res.status(200).json({
@@ -384,7 +420,6 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-// Add this function to your sellerController.js
 // Update payment status (for seller)
 export const updatePaymentStatus = async (req, res) => {
   try {
@@ -405,11 +440,10 @@ export const updatePaymentStatus = async (req, res) => {
     if (!allowedStatuses.includes(paymentStatus)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid payment status. Allowed: pending, paid, failed",
+        message: "Invalid payment status",
       });
     }
 
-    // Find order with seller's items
     const order = await Order.findOne({
       _id: id,
       "items.sellerId": sellerId,
@@ -435,7 +469,7 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
-    // Validation: Only delivered orders can be marked as paid
+    // Only delivered orders can be marked as paid
     if (paymentStatus === "paid" && order.orderStatus !== "delivered") {
       return res.status(400).json({
         success: false,
@@ -444,20 +478,17 @@ export const updatePaymentStatus = async (req, res) => {
     }
 
     // Update payment status
-    const oldPaymentStatus = order.paymentStatus;
     order.paymentStatus = paymentStatus;
 
-    // Set payment date if marked as paid
     if (paymentStatus === "paid") {
       order.paidAt = new Date();
     }
 
-    // Save order
     await order.save({ validateBeforeSave: false });
 
     res.status(200).json({
       success: true,
-      message: `Payment status updated from ${oldPaymentStatus} to ${paymentStatus}`,
+      message: `Payment status updated to ${paymentStatus}`,
       order,
     });
   } catch (error) {
@@ -469,6 +500,7 @@ export const updatePaymentStatus = async (req, res) => {
     });
   }
 };
+
 // Get seller stats for dashboard
 export const getSellerStats = async (req, res) => {
   try {
