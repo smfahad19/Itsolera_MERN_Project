@@ -603,30 +603,41 @@ export const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const sellerId = req.user._id;
 
+    console.log("Delete product request:", { id, sellerId });
+
+    // ✅ FIX: Find product and verify ownership in ONE query
     const product = await Product.findOne({
       _id: id,
-      sellerId,
+      sellerId: sellerId, // This ensures seller owns the product
     });
 
     if (!product) {
+      console.log("Product not found or unauthorized");
       return res.status(404).json({
         success: false,
         message: "Product not found or you don't have permission",
       });
     }
 
+    console.log("Found product:", product._id);
+
     // Delete images from Cloudinary
-    for (const image of product.images) {
-      try {
-        await cloudinary.uploader.destroy(image.public_id);
-        console.log(`Deleted Cloudinary image: ${image.public_id}`);
-      } catch (error) {
-        console.error("Error deleting image from Cloudinary:", error);
+    if (product.images && product.images.length > 0) {
+      for (const image of product.images) {
+        try {
+          await cloudinary.uploader.destroy(image.public_id);
+          console.log(`Deleted Cloudinary image: ${image.public_id}`);
+        } catch (error) {
+          console.error("Error deleting image from Cloudinary:", error);
+          // Continue with deletion even if image delete fails
+        }
       }
     }
 
-    // Delete product from database
-    await Product.findByIdAndDelete(id);
+    // ✅ FIX: Use deleteOne() instead of findByIdAndDelete
+    await Product.deleteOne({ _id: id, sellerId: sellerId });
+
+    console.log("Product deleted successfully:", id);
 
     res.status(200).json({
       success: true,
@@ -636,11 +647,7 @@ export const deleteProduct = async (req, res) => {
     console.error("Delete Product Error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error:
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Internal server error",
+      message: "Server error: " + error.message,
     });
   }
 };

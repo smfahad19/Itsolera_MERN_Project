@@ -391,12 +391,6 @@ export const updatePaymentStatus = async (req, res) => {
     const sellerId = req.user._id;
     const { paymentStatus } = req.body;
 
-    console.log("========== PAYMENT STATUS UPDATE ==========");
-    console.log("Order ID:", id);
-    console.log("Seller ID:", sellerId);
-    console.log("New Payment Status:", paymentStatus);
-    console.log("===========================================");
-
     if (!paymentStatus) {
       return res.status(400).json({
         success: false,
@@ -421,16 +415,12 @@ export const updatePaymentStatus = async (req, res) => {
     });
 
     if (!order) {
-      console.log("❌ Order not found:", id);
+      console.log(" Order not found:", id);
       return res.status(404).json({
         success: false,
         message: "Order not found or you don't have permission",
       });
     }
-
-    console.log("✅ Order found:", order._id);
-    console.log("Current orderStatus:", order.orderStatus);
-    console.log("Current paymentStatus:", order.paymentStatus);
 
     // Check if seller can update this order
     const sellerItems = order.items.filter(
@@ -439,19 +429,15 @@ export const updatePaymentStatus = async (req, res) => {
     );
 
     if (sellerItems.length === 0) {
-      console.log("❌ No seller items found");
+      console.log("No seller items found");
       return res.status(403).json({
         success: false,
         message: "You don't have permission to update this order",
       });
     }
-
-    console.log("✅ Seller has items in this order:", sellerItems.length);
-
-    // IMPORTANT FIX: Only allow payment status update for delivered orders
     if (paymentStatus === "paid" && order.orderStatus !== "delivered") {
       console.log(
-        "❌ Cannot mark as paid - Order not delivered. Current status:",
+        " Cannot mark as paid - Order not delivered. Current status:",
         order.orderStatus,
       );
       return res.status(400).json({
@@ -462,28 +448,20 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
-    // If marking as paid, also check if order is delivered
     if (paymentStatus === "paid" && order.orderStatus === "delivered") {
-      console.log("✅ Order is delivered, can mark as paid");
+      console.log(" Order is delivered, can mark as paid");
     }
 
-    // Store old status for response message
     const oldStatus = order.paymentStatus;
 
-    // Update payment status
     order.paymentStatus = paymentStatus;
 
-    // Set paidAt timestamp if marking as paid
     if (paymentStatus === "paid") {
       order.paidAt = new Date();
-      console.log("✅ PaidAt timestamp set:", order.paidAt);
+      console.log("PaidAt timestamp set:", order.paidAt);
     }
 
-    // Save the order
     await order.save();
-    console.log("✅ Order saved successfully");
-    console.log("New paymentStatus:", order.paymentStatus);
-    console.log("New paidAt:", order.paidAt);
 
     res.status(200).json({
       success: true,
@@ -496,13 +474,14 @@ export const updatePaymentStatus = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Update Payment Status Error:", error);
+    console.error("Update Payment Status Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error: " + error.message,
     });
   }
 };
+
 // Get seller stats for dashboard
 export const getSellerStats = async (req, res) => {
   try {
