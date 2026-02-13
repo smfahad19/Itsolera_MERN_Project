@@ -336,27 +336,6 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Define allowed transitions
-    const allowedTransitions = {
-      pending: ["processing", "cancelled"],
-      processing: ["shipped", "cancelled"],
-      shipped: ["delivered"],
-      delivered: [], // No further updates
-      cancelled: [], // No further updates
-    };
-
-    // Check if transition is allowed
-    const currentStatus = order.orderStatus;
-    if (
-      !allowedTransitions[currentStatus]?.includes(status) &&
-      currentStatus !== status
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change order status from ${currentStatus} to ${status}`,
-      });
-    }
-
     // Validation for cancellation
     if (status === "cancelled") {
       // Check if order can be cancelled (only pending or processing)
@@ -376,17 +355,6 @@ export const updateOrderStatus = async (req, res) => {
       }
     }
 
-    // Validation for delivered
-    if (status === "delivered") {
-      // Check if payment is completed
-      if (order.paymentStatus !== "paid") {
-        return res.status(400).json({
-          success: false,
-          message: "Cannot mark order as delivered until payment is completed",
-        });
-      }
-    }
-
     // Update order status
     order.orderStatus = status;
 
@@ -396,13 +364,9 @@ export const updateOrderStatus = async (req, res) => {
     } else if (status === "cancelled") {
       order.cancelledAt = new Date();
       order.cancelledReason = reason;
-    } else if (status === "processing" && !order.processedAt) {
-      order.processedAt = new Date();
-    } else if (status === "shipped" && !order.shippedAt) {
-      order.shippedAt = new Date();
     }
 
-    // Save order
+    // Save order without validation for sellerId
     await order.save({ validateBeforeSave: false });
 
     res.status(200).json({
@@ -420,12 +384,18 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-// Update payment status (for seller)
+// Update payment status (for seller) - COMPLETE FIXED VERSION
 export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const sellerId = req.user._id;
     const { paymentStatus } = req.body;
+
+    console.log("========== PAYMENT STATUS UPDATE ==========");
+    console.log("Order ID:", id);
+    console.log("Seller ID:", sellerId);
+    console.log("New Payment Status:", paymentStatus);
+    console.log("===========================================");
 
     if (!paymentStatus) {
       return res.status(400).json({
@@ -440,21 +410,27 @@ export const updatePaymentStatus = async (req, res) => {
     if (!allowedStatuses.includes(paymentStatus)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid payment status",
+        message: "Invalid payment status. Allowed: pending, paid, failed",
       });
     }
 
+    // Find order with seller's items
     const order = await Order.findOne({
       _id: id,
       "items.sellerId": sellerId,
     });
 
     if (!order) {
+      console.log("❌ Order not found:", id);
       return res.status(404).json({
         success: false,
         message: "Order not found or you don't have permission",
       });
     }
+
+    console.log("✅ Order found:", order._id);
+    console.log("Current orderStatus:", order.orderStatus);
+    console.log("Current paymentStatus:", order.paymentStatus);
 
     // Check if seller can update this order
     const sellerItems = order.items.filter(
@@ -463,44 +439,70 @@ export const updatePaymentStatus = async (req, res) => {
     );
 
     if (sellerItems.length === 0) {
+      console.log("❌ No seller items found");
       return res.status(403).json({
         success: false,
         message: "You don't have permission to update this order",
       });
     }
 
-    // Only delivered orders can be marked as paid
+    console.log("✅ Seller has items in this order:", sellerItems.length);
+
+    // IMPORTANT FIX: Only allow payment status update for delivered orders
     if (paymentStatus === "paid" && order.orderStatus !== "delivered") {
+      console.log(
+        "❌ Cannot mark as paid - Order not delivered. Current status:",
+        order.orderStatus,
+      );
       return res.status(400).json({
         success: false,
-        message: "Only delivered orders can be marked as paid",
+        message:
+          "Cannot mark as paid. Order must be delivered first. Current status: " +
+          order.orderStatus,
       });
     }
+
+    // If marking as paid, also check if order is delivered
+    if (paymentStatus === "paid" && order.orderStatus === "delivered") {
+      console.log("✅ Order is delivered, can mark as paid");
+    }
+
+    // Store old status for response message
+    const oldStatus = order.paymentStatus;
 
     // Update payment status
     order.paymentStatus = paymentStatus;
 
+    // Set paidAt timestamp if marking as paid
     if (paymentStatus === "paid") {
       order.paidAt = new Date();
+      console.log("✅ PaidAt timestamp set:", order.paidAt);
     }
 
-    await order.save({ validateBeforeSave: false });
+    // Save the order
+    await order.save();
+    console.log("✅ Order saved successfully");
+    console.log("New paymentStatus:", order.paymentStatus);
+    console.log("New paidAt:", order.paidAt);
 
     res.status(200).json({
       success: true,
-      message: `Payment status updated to ${paymentStatus}`,
-      order,
+      message: `Payment status updated from ${oldStatus} to ${paymentStatus}`,
+      order: {
+        _id: order._id,
+        paymentStatus: order.paymentStatus,
+        paidAt: order.paidAt,
+        orderStatus: order.orderStatus,
+      },
     });
   } catch (error) {
-    console.error("Update Payment Status Error:", error);
+    console.error("❌ Update Payment Status Error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
+      message: "Server error: " + error.message,
     });
   }
 };
-
 // Get seller stats for dashboard
 export const getSellerStats = async (req, res) => {
   try {
