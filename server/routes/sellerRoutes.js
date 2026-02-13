@@ -4,9 +4,11 @@ import {
   getSellerProfile,
   updateSellerProfile,
   checkApprovalStatus,
-  getSellerOrders, // Add this
-  getSellerOrder, // Add this
-  updateOrderStatus, // Add this
+  getSellerOrders,
+  getSellerOrder,
+  updateOrderStatus,
+  updatePaymentStatus,
+  getSellerStats,
 } from "../controllers/seller/sellerController.js";
 import {
   createProduct,
@@ -44,8 +46,10 @@ router.delete("/products/:id", deleteProduct);
 router.patch("/products/:id/stock", updateStock);
 
 // Order Management routes
-router.get("/orders", getSellerOrders); // Add this
-router.get("/orders/:id", getSellerOrder); // Add this
-router.put("/orders/:id/status", updateOrderStatus); // Add this
+router.get("/orders", getSellerOrders);
+router.get("/orders/:id", getSellerOrder);
+router.put("/orders/:id/status", updateOrderStatus);
+router.put("/orders/:id/payment-status", updatePaymentStatus);
+router.get("/stats", getSellerStats);
 
 export default router;
