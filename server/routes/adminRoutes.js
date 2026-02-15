@@ -18,6 +18,7 @@ import {
   suspendSeller,
   verifySellerDocument,
   getAllProducts,
+  getProductById, // Yeh import hona chahiye
   updateProductStatus,
   deleteProduct,
   getAllCategories,
@@ -26,7 +27,6 @@ import {
   updateCategory,
   updateCategoryStatus,
   deleteCategory,
-  getProductById,
 } from "../controllers/admin/adminController.js";
 import { authenticate, authorize } from "../middlewares/auth.js";
 
@@ -69,10 +69,9 @@ router.put("/sellers/:sellerId/documents/verify", verifySellerDocument);
 
 // ==================== PRODUCT MANAGEMENT ====================
 router.get("/products", getAllProducts);
+router.get("/products/:id", getProductById); // YEH IMPORTANT HAI
 router.put("/products/:id/status", updateProductStatus);
 router.delete("/products/:id", deleteProduct);
-
-router.get("/products/:id", getProductById);
 
 // ==================== CATEGORY MANAGEMENT ====================
 router.get("/categories", getAllCategories);

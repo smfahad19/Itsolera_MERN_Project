@@ -142,11 +142,7 @@ const AdminSettings = () => {
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this category? This will also delete all subcategories and products.",
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete this category?")) {
       return;
     }
 
@@ -255,6 +251,48 @@ const AdminSettings = () => {
     }
   };
 
+  // ==================== PRODUCT VIEWING ====================
+  const handleViewProduct = async (productId) => {
+    try {
+      setSelectedProduct(productId);
+      setProductDetailsLoading(true);
+      setShowProductModal(true);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/admin/products/${productId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (response.data.success) {
+        setProductDetails(response.data.product);
+      } else {
+        toast.error("Failed to load product details");
+        setShowProductModal(false);
+      }
+    } catch (error) {
+      console.error("Fetch Product Details Error:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to load product details",
+      );
+      setShowProductModal(false);
+    } finally {
+      setProductDetailsLoading(false);
+    }
+  };
+
+  const handleEditProduct = (productId) => {
+    navigate(`/admin/products/edit/${productId}`);
+  };
+
+  const closeProductModal = () => {
+    setShowProductModal(false);
+    setSelectedProduct(null);
+    setProductDetails(null);
+  };
+
+  // ==================== USERS ====================
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
@@ -317,41 +355,6 @@ const AdminSettings = () => {
     }
   };
 
-  // ==================== PRODUCT VIEWING ====================
-  const handleViewProduct = async (productId) => {
-    try {
-      setSelectedProduct(productId);
-      setProductDetailsLoading(true);
-
-      const response = await axios.get(
-        `${API_BASE_URL}/api/admin/products/${productId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.data.success) {
-        setProductDetails(response.data.product);
-        setShowProductModal(true);
-      }
-    } catch (error) {
-      console.error("Fetch Product Details Error:", error);
-      toast.error("Failed to load product details");
-    } finally {
-      setProductDetailsLoading(false);
-    }
-  };
-
-  const handleEditProduct = (productId) => {
-    navigate(`/admin/products/edit/${productId}`);
-  };
-
-  const closeProductModal = () => {
-    setShowProductModal(false);
-    setSelectedProduct(null);
-    setProductDetails(null);
-  };
-
   const tabs = [
     {
       id: "categories",
@@ -363,11 +366,7 @@ const AdminSettings = () => {
       name: "Products",
       icon: <FiPackage className="w-4 h-4" />,
     },
-    {
-      id: "users",
-      name: "Users",
-      icon: <FiUsers className="w-4 h-4" />,
-    },
+    { id: "users", name: "Users", icon: <FiUsers className="w-4 h-4" /> },
   ];
 
   if (loading && activeTab === "categories") {
@@ -723,7 +722,6 @@ const AdminSettings = () => {
                         ...productFilters,
                         search: e.target.value,
                       });
-                      fetchProducts();
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                     placeholder="Search by product name"
@@ -740,7 +738,6 @@ const AdminSettings = () => {
                         ...productFilters,
                         category: e.target.value,
                       });
-                      fetchProducts();
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                   >
@@ -763,7 +760,6 @@ const AdminSettings = () => {
                         ...productFilters,
                         isActive: e.target.value,
                       });
-                      fetchProducts();
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                   >
@@ -772,6 +768,14 @@ const AdminSettings = () => {
                     <option value="false">Inactive</option>
                   </select>
                 </div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={fetchProducts}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                >
+                  Apply Filters
+                </button>
               </div>
             </div>
 
@@ -858,9 +862,6 @@ const AdminSettings = () => {
                                   <div className="text-sm text-gray-500">
                                     {product.brand || "No brand"}
                                   </div>
-                                  <div className="text-xs text-gray-400 mt-1">
-                                    ID: {product._id.substring(0, 8)}...
-                                  </div>
                                 </div>
                               </div>
                             </td>
@@ -873,11 +874,6 @@ const AdminSettings = () => {
                               <div className="text-sm text-gray-900">
                                 ${product.price?.toFixed(2)}
                               </div>
-                              {product.discountPrice && (
-                                <div className="text-xs text-gray-500 line-through">
-                                  ${product.discountPrice.toFixed(2)}
-                                </div>
-                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div
@@ -960,12 +956,6 @@ const AdminSettings = () => {
                             <div className="text-gray-500">
                               <FiPackage className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                               <p>No products found</p>
-                              <button
-                                onClick={() => navigate("/admin/products/add")}
-                                className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-                              >
-                                Add New Product
-                              </button>
                             </div>
                           </td>
                         </tr>
@@ -999,7 +989,6 @@ const AdminSettings = () => {
                         ...userFilters,
                         search: e.target.value,
                       });
-                      fetchUsers();
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                     placeholder="Search by name or email"
@@ -1013,7 +1002,6 @@ const AdminSettings = () => {
                     value={userFilters.role}
                     onChange={(e) => {
                       setUserFilters({ ...userFilters, role: e.target.value });
-                      fetchUsers();
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                   >
@@ -1023,6 +1011,14 @@ const AdminSettings = () => {
                     <option value="admin">Admins</option>
                   </select>
                 </div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={fetchUsers}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                >
+                  Apply Filters
+                </button>
               </div>
             </div>
 
@@ -1145,15 +1141,6 @@ const AdminSettings = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center space-x-2">
-                                <button
-                                  onClick={() =>
-                                    navigate(`/admin/users/${user._id}`)
-                                  }
-                                  className="text-blue-600 hover:text-blue-900 p-1"
-                                  title="View Details"
-                                >
-                                  <FiEye className="w-4 h-4" />
-                                </button>
                                 <select
                                   value={user.role}
                                   onChange={(e) =>
@@ -1254,11 +1241,6 @@ const AdminSettings = () => {
                       <div className="text-2xl font-bold text-gray-900">
                         ${productDetails.price?.toFixed(2)}
                       </div>
-                      {productDetails.discountPrice && (
-                        <div className="text-lg text-gray-500 line-through">
-                          ${productDetails.discountPrice.toFixed(2)}
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1324,30 +1306,6 @@ const AdminSettings = () => {
                           </span>
                         </div>
                       </div>
-
-                      <div>
-                        <h5 className="text-lg font-semibold mb-2">
-                          Specifications
-                        </h5>
-                        <div className="space-y-2">
-                          {productDetails.specifications &&
-                            Object.entries(productDetails.specifications).map(
-                              ([key, value]) => (
-                                <div key={key} className="flex justify-between">
-                                  <span className="text-gray-600 capitalize">
-                                    {key}:
-                                  </span>
-                                  <span className="font-medium">{value}</span>
-                                </div>
-                              ),
-                            )}
-                          {(!productDetails.specifications ||
-                            Object.keys(productDetails.specifications)
-                              .length === 0) && (
-                            <p className="text-gray-500">No specifications</p>
-                          )}
-                        </div>
-                      </div>
                     </div>
 
                     {/* Right Column */}
@@ -1364,24 +1322,6 @@ const AdminSettings = () => {
                               <strong>
                                 ${productDetails.price?.toFixed(2)}
                               </strong>
-                            </span>
-                          </div>
-
-                          <div className="flex items-center">
-                            <FiShoppingCart className="w-4 h-4 mr-2 text-gray-500" />
-                            <span>
-                              Minimum Order:{" "}
-                              <strong>
-                                {productDetails.minimumOrder || 1} units
-                              </strong>
-                            </span>
-                          </div>
-
-                          <div className="flex items-center">
-                            <FiStar className="w-4 h-4 mr-2 text-gray-500" />
-                            <span>
-                              Rating:{" "}
-                              <strong>{productDetails.rating || "N/A"}</strong>
                             </span>
                           </div>
 
@@ -1463,7 +1403,10 @@ const AdminSettings = () => {
                       Close
                     </button>
                     <button
-                      onClick={() => handleEditProduct(productDetails._id)}
+                      onClick={() => {
+                        closeProductModal();
+                        handleEditProduct(productDetails._id);
+                      }}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                       <FiEdit className="w-4 h-4 inline mr-2" />
@@ -1471,11 +1414,11 @@ const AdminSettings = () => {
                     </button>
                     <button
                       onClick={() => {
-                        closeProductModal();
                         handleProductStatusChange(
                           productDetails._id,
                           productDetails.isActive,
                         );
+                        closeProductModal();
                       }}
                       className={`px-4 py-2 rounded-lg ${
                         productDetails.isActive

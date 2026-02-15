@@ -1588,15 +1588,22 @@ export const deleteCategory = async (req, res) => {
   }
 };
 
-// Controller function for getProductById
+// Get product by ID with populated fields
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
     const product = await Product.findById(id)
       .populate("category", "name")
-      .populate("seller", "name email businessName")
-      .select("-__v");
+      .populate("sellerId", "name email businessName")
+      .lean();
 
     if (!product) {
       return res.status(404).json({
@@ -1605,9 +1612,16 @@ export const getProductById = async (req, res) => {
       });
     }
 
+    // Transform the response to match frontend expectations
+    const transformedProduct = {
+      ...product,
+      seller: product.sellerId,
+    };
+    delete transformedProduct.sellerId; // sellerId hata do
+
     res.status(200).json({
       success: true,
-      product,
+      product: transformedProduct,
     });
   } catch (error) {
     console.error("Get product by ID error:", error);
