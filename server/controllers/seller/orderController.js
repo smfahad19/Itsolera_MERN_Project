@@ -211,7 +211,6 @@ export const updateOrderStatus = async (req, res) => {
 
     // Validation for cancellation
     if (status === "cancelled") {
-      // Check if order can be cancelled (only pending or processing)
       if (!["pending", "processing"].includes(order.orderStatus)) {
         return res.status(400).json({
           success: false,
@@ -330,7 +329,7 @@ export const getSellerStats = async (req, res) => {
     const totalRevenue =
       revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
 
-    // Get recent orders (last 7 days)
+    // Get recent orders
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 

@@ -603,12 +603,9 @@ export const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const sellerId = req.user._id;
 
-    console.log("Delete product request:", { id, sellerId });
-
-    // ✅ FIX: Find product and verify ownership in ONE query
     const product = await Product.findOne({
       _id: id,
-      sellerId: sellerId, // This ensures seller owns the product
+      sellerId: sellerId,
     });
 
     if (!product) {
@@ -629,12 +626,10 @@ export const deleteProduct = async (req, res) => {
           console.log(`Deleted Cloudinary image: ${image.public_id}`);
         } catch (error) {
           console.error("Error deleting image from Cloudinary:", error);
-          // Continue with deletion even if image delete fails
         }
       }
     }
 
-    // ✅ FIX: Use deleteOne() instead of findByIdAndDelete
     await Product.deleteOne({ _id: id, sellerId: sellerId });
 
     console.log("Product deleted successfully:", id);
@@ -712,7 +707,6 @@ export const getSellerProducts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get Seller Products Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",

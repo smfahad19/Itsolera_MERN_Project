@@ -26,7 +26,7 @@ app.use(express.json());
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB Connected"))
+  .then(() => console.log("MongoDB Connected successfully"))
   .catch((err) => console.log("MongoDB Error:", err));
 
 app.get("/", (req, res) => {
