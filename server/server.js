@@ -30,7 +30,7 @@ mongoose
   .catch((err) => console.log("MongoDB Error:", err));
 
 app.get("/", (req, res) => {
-  res.send("Backend Running ");
+  res.send("Backend Running perfectly");
 });
 
 app.use("/api/auth", authRoutes);
