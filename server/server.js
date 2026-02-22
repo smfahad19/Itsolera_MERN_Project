@@ -16,8 +16,10 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://markethubfront.vercel.app",
-      "https://markethubfront-mfm4dp0mq-fahads-projects-c5bdce25.vercel.app"
+      "https://markethubfront.vercel.app",                 
+      "https://markethubfront-mfm4dp0mq-fahads-projects-c5bdce25.vercel.app",
+      "https://markethub-azure.vercel.app",              
+      "https://market-mxq9eu6mp-fahads-projects-c5bdce25.vercel.app" 
     ],
     credentials: true,
   })
