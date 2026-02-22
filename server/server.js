@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: [
       "https://markethubfront.vercel.app",
-      "https://markethubfront-q0dos0p80-fahads-projects-c5bdce25.vercel.app",
+      "https://markethubfront-mfm4dp0mq-fahads-projects-c5bdce25.vercel.app"
     ],
     credentials: true,
   })
