@@ -15,10 +15,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "https://itsolera-mern-project-po64.vercel.app",
-      "https://itsolera-mern-project-5n93.vercel.app",
-    ],
+   origin: [
+  "https://markethubfront.vercel.app",
+  "https://markethub-azure.vercel.app",
+],
     credentials: true,
   }),
 );
