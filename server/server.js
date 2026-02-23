@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
+import dotenv from "dotenv";
 
 import authRoutes from "../routes/authRoutes.js";
 import adminRoutes from "../routes/adminRoutes.js";
@@ -12,17 +12,22 @@ dotenv.config();
 
 const app = express();
 
-let isConnected = false;
+let cachedConnection = null;
 
 const connectDB = async () => {
-  if (isConnected) return;
+  if (cachedConnection) return cachedConnection;
 
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    isConnected = true;
-    console.log("MongoDB Connected successfully");
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      bufferCommands: false,
+    });
+
+    cachedConnection = conn;
+    console.log("MongoDB Connected");
+    return conn;
   } catch (error) {
     console.log("MongoDB Error:", error);
+    throw error;
   }
 };
 
@@ -41,8 +46,12 @@ app.use(
 app.use(express.json());
 
 app.use(async (req, res, next) => {
-  await connectDB();
-  next();
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ message: "Database connection failed" });
+  }
 });
 
 app.get("/", (req, res) => {
