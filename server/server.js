@@ -28,15 +28,12 @@ async function connectDB() {
   }
 }
 
-app.use(cors({
-  origin: [
-    "https://markethubfront.vercel.app",
-    "https://markethubfront-mfm4dp0mq-fahads-projects-c5bdce25.vercel.app",
-    "https://markethub-azure.vercel.app",
-    "https://market-mxq9eu6mp-fahads-projects-c5bdce25.vercel.app"
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://markethubfront.vercel.app"],
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
